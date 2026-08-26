@@ -2,120 +2,175 @@ import { useState, useEffect } from 'react';
 
 function App() {
   const [students, setStudents] = useState([]);
-  const [form, setForm] = useState({ studentId: '', name: '', email: '' });
-  const [editingId, setEditingId] = useState(null);
-  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    studentId: '',
+    name: '',
+    email: ''
+  });
+  const [editingId, setEditingId] = useState(null); // Trạng thái lưu ID sinh viên đang sửa
 
-  const API_URL = '/api/students';
+  const API_URL = 'http://localhost:5000/api/students';
 
+  // Lấy danh sách sinh viên
   const fetchStudents = async () => {
     try {
       const res = await fetch(API_URL);
-      if (!res.ok) throw new Error('Không thể tải danh sách sinh viên');
       const data = await res.json();
-      setStudents(data);
-    } catch (error) {
-      console.error('Lỗi lấy danh sách:', error);
-      setError(error.message);
+      if (res.ok) setStudents(data);
+    } catch (err) {
+      console.error("Lỗi fetch danh sách:", err);
     }
   };
 
   useEffect(() => {
-    const loadStudents = async () => {
-      await fetchStudents();
-    };
-    loadStudents();
+    fetchStudents();
   }, []);
 
+  // Xử lý Thêm hoặc Cập nhật sinh viên
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    const isEdit = Boolean(editingId);
+    const url = isEdit ? `${API_URL}/${editingId}` : API_URL;
+    const method = isEdit ? 'PUT' : 'POST';
+
     try {
-      let res;
-      if (editingId) {
-        res = await fetch(`${API_URL}/${editingId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form)
-        });
-      } else {
-        res = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form)
-        });
-      }
+      const res = await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Không thể lưu sinh viên');
-      setEditingId(null);
-      setForm({ studentId: '', name: '', email: '' });
-      fetchStudents();
-    } catch (error) {
-      console.error('Lỗi khi lưu:', error);
-      setError(error.message);
+      if (res.ok) {
+        alert(isEdit ? 'Cập nhật thành công!' : 'Thêm sinh viên thành công!');
+        setFormData({ studentId: '', name: '', email: '' });
+        setEditingId(null);
+        fetchStudents();
+      } else {
+        alert('Lỗi: ' + (data.message || 'Thao tác thất bại'));
+      }
+    } catch (err) {
+      console.error("Lỗi gửi dữ liệu:", err);
     }
   };
 
-  const handleEdit = (std) => {
-    setEditingId(std._id);
-    setForm({ studentId: std.studentId, name: std.name, email: std.email });
+  // Đưa dữ liệu sinh viên lên form để sửa (Câu 77)
+  const handleEdit = (student) => {
+    setEditingId(student._id);
+    setFormData({
+      studentId: student.studentId,
+      name: student.name,
+      email: student.email
+    });
   };
 
-  // Câu 62: Gọi API DELETE để xóa
+  // Hủy chế độ sửa
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setFormData({ studentId: '', name: '', email: '' });
+  };
+
+  // Xóa sinh viên (Câu 78)
   const handleDelete = async (id) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa sinh viên này?')) return;
+
     try {
-      const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-      if (!res.ok) {
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        alert('Xóa sinh viên thành công!');
+        fetchStudents();
+      } else {
         const data = await res.json();
-        throw new Error(data.message || 'Không thể xóa sinh viên');
+        alert('Lỗi: ' + (data.message || 'Không thể xóa'));
       }
-      fetchStudents();
-    } catch (error) {
-      console.error('Lỗi khi xóa:', error);
-      setError(error.message);
+    } catch (err) {
+      console.error("Lỗi xóa sinh viên:", err);
     }
   };
 
   return (
-    <div style={{ padding: '30px', fontFamily: 'Arial, sans-serif', maxWidth: '650px', margin: '0 auto' }}>
+    <div style={{ padding: '20px', maxWidth: '650px', margin: 'auto', fontFamily: 'sans-serif' }}>
       <h2>Quản Lý Sinh Viên (MERN Stack)</h2>
-      {error && <p role="alert" style={{ color: '#b42318' }}>{error}</p>}
       
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-        <input 
-          placeholder="Mã Sinh Viên" 
-          value={form.studentId} 
-          onChange={e => setForm({...form, studentId: e.target.value})} 
-          required 
-          style={{ padding: '8px' }}
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <input
+          type="text"
+          placeholder="Mã số sinh viên (studentId)"
+          value={formData.studentId}
+          onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+          required
         />
-        <input 
-          placeholder="Họ và Tên" 
-          value={form.name} 
-          onChange={e => setForm({...form, name: e.target.value})} 
-          required 
-          style={{ padding: '8px' }}
+        <input
+          type="text"
+          placeholder="Họ và tên"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          required
         />
-        <input 
-          placeholder="Email" 
-          value={form.email} 
-          onChange={e => setForm({...form, email: e.target.value})} 
-          required 
-          style={{ padding: '8px' }}
+        <input
+          type="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          required
         />
-        <button type="submit" style={{ padding: '10px', backgroundColor: editingId ? '#28a745' : '#007bff', color: '#fff', border: 'none', cursor: 'pointer' }}>
-          {editingId ? 'Cập Nhật Sinh Viên' : 'Thêm Sinh Viên'}
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button 
+            type="submit" 
+            style={{ 
+              flex: 1, 
+              padding: '10px', 
+              background: editingId ? '#28a745' : '#007bff', 
+              color: '#fff', 
+              border: 'none', 
+              cursor: 'pointer' 
+            }}
+          >
+            {editingId ? 'Cập Nhật Sinh Viên' : 'Thêm Sinh Viên'}
+          </button>
+          
+          {editingId && (
+            <button 
+              type="button" 
+              onClick={handleCancelEdit}
+              style={{ padding: '10px', background: '#6c757d', color: '#fff', border: 'none', cursor: 'pointer' }}
+            >
+              Hủy Sửa
+            </button>
+          )}
+        </div>
       </form>
 
       <h3>Danh Sách Sinh Viên</h3>
       <ul style={{ listStyle: 'none', padding: 0 }}>
-        {students.map(std => (
-          <li key={std._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', borderBottom: '1px solid #ccc' }}>
-            <span><strong>{std.studentId}</strong> - {std.name} ({std.email})</span>
-            <div>
-              <button onClick={() => handleEdit(std)} style={{ backgroundColor: '#ffc107', color: 'black', border: 'none', marginRight: '5px', padding: '5px 10px', cursor: 'pointer' }}>Sửa</button>
-              <button onClick={() => handleDelete(std._id)} style={{ backgroundColor: '#dc3545', color: 'white', border: 'none', padding: '5px 10px', cursor: 'pointer' }}>Xóa</button>
+        {students.map((s) => (
+          <li 
+            key={s._id || s.studentId}
+            style={{ 
+              display: 'flex', 
+              justify: 'space-between', 
+              alignItems: 'center', 
+              padding: '10px 0', 
+              borderBottom: '1px solid #ddd' 
+            }}
+          >
+            <span>{s.studentId} - {s.name} - {s.email}</span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button 
+                onClick={() => handleEdit(s)}
+                style={{ background: '#ffc107', border: 'none', padding: '5px 10px', cursor: 'pointer' }}
+              >
+                Sửa
+              </button>
+              <button 
+                onClick={() => handleDelete(s._id)}
+                style={{ background: '#dc3545', color: '#fff', border: 'none', padding: '5px 10px', cursor: 'pointer' }}
+              >
+                Xóa
+              </button>
             </div>
           </li>
         ))}

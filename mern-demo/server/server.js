@@ -10,16 +10,17 @@ app.use(cors());
 app.use(express.json());
 
 // Kết nối MongoDB
-mongoose.connect(process.env.MONGODB_URI)
+const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/test';
+mongoose.connect(mongoURI)
   .then(() => console.log('MongoDB connected successfully'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// API Hello
+// API Root
 app.get('/api/hello', (req, res) => {
   res.json({ message: 'Backend running successfully!' });
 });
 
-// Câu 36: GET /api/students
+// GET /api/students - Lấy danh sách
 app.get('/api/students', async (req, res) => {
   try {
     const students = await Student.find();
@@ -29,7 +30,7 @@ app.get('/api/students', async (req, res) => {
   }
 });
 
-// Câu 37: POST /api/students
+// POST /api/students - Thêm mới
 app.post('/api/students', async (req, res) => {
   try {
     const newStudent = await Student.create(req.body);
@@ -39,7 +40,7 @@ app.post('/api/students', async (req, res) => {
   }
 });
 
-// Câu 38: PUT /api/students/:id
+// PUT /api/students/:id - Cập nhật
 app.put('/api/students/:id', async (req, res) => {
   try {
     const updatedStudent = await Student.findByIdAndUpdate(
@@ -53,7 +54,7 @@ app.put('/api/students/:id', async (req, res) => {
   }
 });
 
-// Câu 39: DELETE /api/students/:id
+// DELETE /api/students/:id - Xóa
 app.delete('/api/students/:id', async (req, res) => {
   try {
     await Student.findByIdAndDelete(req.params.id);
