@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  backend:
+    image: athn685/mern-backend:v1.0
+    container_name: mern-backend-hub
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGODB_URI=mongodb+srv://nhtaath_db_user:682005Ta.@cluster0.k8wwwze.mongodb.net/student_db?retryWrites=true&w=majority
+      - PORT=5000
+
+  frontend:
+    image: athn685/mern-frontend:2.0
+    container_name: mern-frontend-hub
+    ports:
+      - "3000:5173"
+    depends_on:
+      - backend

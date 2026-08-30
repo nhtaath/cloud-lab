@@ -93,8 +93,7 @@ function App() {
 
   return (
     <div style={{ padding: '20px', maxWidth: '650px', margin: 'auto', fontFamily: 'sans-serif' }}>
-      <h2>Quản Lý Sinh Viên (MERN Stack)</h2>
-      
+    <h2>Quản Lý Sinh Viên - Version 2.0 (athn685)</h2>      
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <input
           type="text"
