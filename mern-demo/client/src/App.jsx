@@ -9,7 +9,7 @@ function App() {
   });
   const [editingId, setEditingId] = useState(null); // Trạng thái lưu ID sinh viên đang sửa
 
-  const API_URL = 'http://localhost:5000/api/students';
+  const API_URL = `${import.meta.env.VITE_API_URL || ''}/api/students`;
 
   // Lấy danh sách sinh viên
   const fetchStudents = async () => {

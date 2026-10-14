@@ -6,7 +6,24 @@ require('dotenv').config();
 const Student = require('./models/Student');
 
 const app = express();
-app.use(cors());
+
+const clean = (v) => (v || '').trim().replace(/^["']|["']$/g, '').replace(/\/+$/, '');
+
+const allowedOrigins = [
+  clean(process.env.CLIENT_URL),
+  'http://localhost:5173',
+  'http://localhost:3000'
+].filter(Boolean);
+
+console.log('Allowed origins:', allowedOrigins);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    console.log('CORS blocked origin:', origin);
+    return callback(new Error('Not allowed by CORS'));
+  }
+}));
 app.use(express.json());
 
 // Kết nối MongoDB
